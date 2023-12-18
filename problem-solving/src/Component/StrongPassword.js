@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button, Input, TextField, Typography } from '@mui/material'
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -7,26 +7,51 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
+import axios from 'axios';
+import { BACKEND_URL } from './Constant';
 
 const StrongPassword = () => {
   const [showInput, setShowInput] = useState(false)
 
   const [password, setPassword] = useState('')
 
-  const [rows, setRows] = useState([
-    { passwordString: 'vrwirowi', alliteration: "3" }
-  ]);
+  const [rows, setRows] = useState([]);
 
+  const fetchListPassword = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/fetch-StrongPassword`);
+
+      setRows(response?.data?.result?.data);
+
+      console.log("Response: ", response)
+    }
+    catch (error) {
+      console.error('Error: ', error)
+    }
+  }
+
+  useEffect(()=>{
+    fetchListPassword()
+  },[])
   const handleClick = () => {
     setShowInput(true)
   }
-  const handleSubmit = () => {
+
+  const handleSubmit = async () => {
     let result = checkStrongPassword(password);
-    console.log('result :>> ', result);
-    setRows(prevRows => [
-      ...prevRows,
-      { passwordString: password, alliteration: result }
-    ]);
+    let payload = {
+      passwordString: password,
+      noOfAlliteration: result
+    }
+    console.log(payload)
+    try {
+      const response = await axios.post(`${BACKEND_URL}/strongPassword`, payload);
+      fetchListPassword()
+      console.log("Response: ", response)
+    }
+    catch (error) {
+      console.error('Error: ', error)
+    }
   }
 
   const handleChange = (event) => {
@@ -137,8 +162,8 @@ const StrongPassword = () => {
                     sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                   >
                     {/* <TableCell component="th" scope="row">{row.name}</TableCell> */}
-                    <TableCell>{row.passwordString}</TableCell>
-                    <TableCell>{row.alliteration}</TableCell>
+                    <TableCell>{row?.passwordString}</TableCell>
+                    <TableCell>{row?.noOfAlliteration}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
